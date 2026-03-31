@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trading Speed Dashboard v3</title>
+    <style>
+        :root {
+            --bg-color: #020617;
+            --card-bg: #1e293b;
+            --text-color: #f8fafc;
+            --primary-green: #22c55e;
+            --danger-red: #ef4444;
+            --accent-blue: #3b82f6;
+            --item-bg: #0f172a;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body, html { 
+            height: 100vh; overflow: hidden; 
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: var(--bg-color); color: var(--text-color);
+        }
+
+        .dashboard { display: flex; flex-direction: column; height: 100vh; padding: 1rem; gap: 1rem; }
+
+        /* Header & Confidence Bar */
+        .status-header {
+            display: grid; grid-template-columns: 1fr 350px; gap: 1.5rem;
+            background: var(--card-bg); padding: 1rem; border-radius: 15px; border: 1px solid #334155;
+        }
+
+        .buy-zone {
+            background: #000; height: 70px; border-radius: 10px;
+            position: relative; border: 2px solid #334155; overflow: hidden;
+        }
+
+        #progress-bar {
+            height: 100%; width: 0%; 
+            transition: all 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+            position: absolute; left: 50%; z-index: 1;
+        }
+        #progress-bar.positive { background: var(--primary-green); box-shadow: 0 0 30px rgba(34, 197, 94, 0.4); }
+        #progress-bar.negative { background: var(--danger-red); left: auto; right: 50%; box-shadow: 0 0 30px rgba(239, 68, 68, 0.4); }
+
+        .buy-label {
+            position: absolute; width: 100%; text-align: center; top: 50%; transform: translateY(-50%);
+            font-size: 2.2rem; font-weight: 900; color: #fff; z-index: 5;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.9), -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+        }
+
+        /* Timeframe Grid */
+        .timeframe-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; flex-grow: 1; overflow: hidden; }
+
+        .tf-column {
+            background: var(--card-bg); border-radius: 12px; border: 1px solid #334155;
+            display: flex; flex-direction: column; padding: 10px; overflow: hidden;
+        }
+
+        .tf-header { text-align: center; color: var(--accent-blue); font-weight: 800; font-size: 1rem; margin-bottom: 8px; }
+
+        .quick-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 10px; }
+        .qa-btn {
+            padding: 8px; border: none; border-radius: 4px; font-size: 0.7rem; font-weight: 800;
+            cursor: pointer; color: #fff; transition: 0.2s;
+        }
+        .qa-buy { background: #14532d; border: 1px solid var(--primary-green); }
+        .qa-sell { background: #7f1d1d; border: 1px solid var(--danger-red); }
+
+        /* Indicator Item với nhãn góc */
+        .indicator-list { overflow-y: auto; flex-grow: 1; padding-right: 2px; }
+        .indicator-item {
+            background: var(--item-bg); margin-bottom: 6px; border-radius: 6px;
+            overflow: hidden; border: 1px solid #334155; position: relative;
+            transition: all 0.3s;
+        }
+
+        .ind-title {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            font-size: 0.8rem; font-weight: 700; pointer-events: none; z-index: 3;
+            width: 70%; text-align: center; color: #fff;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+        }
+
+        /* Nhãn nhỏ ở 2 bên góc */
+        .side-label {
+            position: absolute; font-size: 0.6rem; font-weight: 900;
+            top: 4px; opacity: 0.3; transition: 0.3s; z-index: 4;
+            pointer-events: none; letter-spacing: 1px;
+        }
+        .label-buy { left: 8px; color: var(--primary-green); }
+        .label-sell { right: 8px; color: var(--danger-red); }
+
+        /* Highlight khi chọn */
+        .indicator-item.is-buy { background: #14532d !important; border-color: var(--primary-green); }
+        .indicator-item.is-buy .label-buy { opacity: 1; transform: scale(1.1); }
+        
+        .indicator-item.is-sell { background: #7f1d1d !important; border-color: var(--danger-red); }
+        .indicator-item.is-sell .label-sell { opacity: 1; transform: scale(1.1); }
+
+        .split-container { display: flex; height: 50px; }
+        .split-half { flex: 1; cursor: pointer; position: relative; z-index: 2; }
+        .split-half input { display: none; }
+
+        /* Đường kẻ mờ ở giữa để phân biệt 2 vùng click */
+        .half-buy { border-right: 1px solid rgba(255,255,255,0.05); }
+        .half-buy:hover { background: rgba(34, 197, 94, 0.15); }
+        .half-sell:hover { background: rgba(239, 68, 68, 0.15); }
+
+        /* Macro & Reset */
+        .side-panel { display: flex; flex-direction: column; gap: 10px; }
+        .m-group { display: flex; gap: 5px; }
+        .m-btn { flex: 1; padding: 12px; border-radius: 8px; border: 1px solid #475569; background: #0f172a; cursor: pointer; font-size: 0.75rem; font-weight: bold; color: #fff; }
+        .m-btn.active { background: var(--accent-blue); border-color: #fff; }
+        .clear-btn { padding: 12px; background: var(--danger-red); border: none; border-radius: 8px; color: white; font-weight: 800; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div class="dashboard">
+    <div class="status-header">
+        <div class="buy-zone">
+            <div id="progress-bar"></div>
+            <div class="buy-label">CONFIDENCE: <span id="percent-text">0</span>%</div>
+        </div>
+        <div class="side-panel">
+            <div class="m-group">
+                <div class="m-btn" data-val="20" onclick="setMacro(this)">VĨ MÔ +</div>
+                <div class="m-btn active" data-val="0" id="m-neutral" onclick="setMacro(this)">TRUNG LẬP</div>
+                <div class="m-btn" data-val="-20" onclick="setMacro(this)">VĨ MÔ -</div>
+            </div>
+            <button class="clear-btn" onclick="clearAll()">❌ RESET TẤT CẢ</button>
+        </div>
+    </div>
+
+    <div class="timeframe-grid" id="main-grid"></div>
+</div>
+
+<script>
+    const tfs = [
+        { name: "KHUNG 1H (1%)", weight: 1.0, id: "1h" },
+        { name: "KHUNG 4H (2%)", weight: 2.0, id: "4h" },
+        { name: "KHUNG 1D (4%)", weight: 4.0, id: "1d" },
+        { name: "KHUNG 1W (3%)", weight: 3.0, id: "1w" }
+    ];
+
+    const indicators = ["Cấu trúc xu hướng", "RSI (Quá mua/bán)", "MACD Histogram", "Giá vs MA20/50", "Nến đảo chiều", "Volume Confirm", "Hỗ trợ/Kháng cự", "Bollinger Band", "Fibonacci Level", "Stochastic"];
+
+    function render() {
+        const grid = document.getElementById('main-grid');
+        tfs.forEach(tf => {
+            let html = `
+                <div class="tf-column">
+                    <div class="tf-header">${tf.name}</div>
+                    <div class="quick-actions">
+                        <button class="qa-btn qa-buy" onclick="bulkCheck('${tf.id}', 'buy')">ALL BUY</button>
+                        <button class="qa-btn qa-sell" onclick="bulkCheck('${tf.id}', 'sell')">ALL SELL</button>
+                    </div>
+                    <div class="indicator-list">
+            `;
+
+            indicators.forEach((ind, idx) => {
+                const groupName = `group_${tf.id}_${idx}`;
+                html += `
+                    <div class="indicator-item" id="item_${tf.id}_${idx}">
+                        <span class="side-label label-buy">BUY</span>
+                        <span class="side-label label-sell">SELL</span>
+                        <div class="ind-title">${ind}</div>
+                        <div class="split-container">
+                            <label class="split-half half-buy">
+                                <input type="radio" name="${groupName}" value="buy" onchange="calcHighlight('${tf.id}', ${idx}, 'buy')">
+                            </label>
+                            <label class="split-half half-sell">
+                                <input type="radio" name="${groupName}" value="sell" onchange="calcHighlight('${tf.id}', ${idx}, 'sell')">
+                            </label>
+                        </div>
+                    </div>
+                `;
+            });
+            html += `</div></div>`;
+            grid.innerHTML += html;
+        });
+    }
+
+    let macroBonus = 0;
+
+    function calcHighlight(tfId, idx, type) {
+        const item = document.getElementById(`item_${tfId}_${idx}`);
+        item.classList.remove('is-buy', 'is-sell');
+        if (type === 'buy') item.classList.add('is-buy');
+        else if (type === 'sell') item.classList.add('is-sell');
+        calc();
+    }
+
+    function bulkCheck(tfId, type) {
+        document.querySelectorAll(`input[name^="group_${tfId}_"]`).forEach((radio, idx) => {
+            if (radio.value === type) {
+                radio.checked = true;
+                const realIdx = Math.floor(idx / 2);
+                const item = document.getElementById(`item_${tfId}_${realIdx}`);
+                item.classList.remove('is-buy', 'is-sell');
+                item.classList.add(type === 'buy' ? 'is-buy' : 'is-sell');
+            }
+        });
+        calc();
+    }
+
+    function setMacro(el) {
+        document.querySelectorAll('.m-btn').forEach(b => b.classList.remove('active'));
+        el.classList.add('active');
+        macroBonus = parseInt(el.getAttribute('data-val'));
+        calc();
+    }
+
+    function calc() {
+        let total = 0;
+        tfs.forEach(tf => {
+            document.querySelectorAll(`input[name^="group_${tf.id}_"]:checked`).forEach(r => {
+                total += (r.value === 'buy' ? tf.weight : -tf.weight);
+            });
+        });
+
+        total += macroBonus;
+        const bar = document.getElementById('progress-bar');
+        const text = document.getElementById('percent-text');
+        text.innerText = total.toFixed(0);
+
+        if (total >= 0) {
+            bar.className = 'positive';
+            bar.style.left = "50%"; bar.style.right = "auto";
+            bar.style.width = (Math.min(total, 100) / 2) + "%";
+        } else {
+            bar.className = 'negative';
+            bar.style.left = "auto"; bar.style.right = "50%";
+            bar.style.width = (Math.min(Math.abs(total), 100) / 2) + "%";
+        }
+    }
+
+    function clearAll() {
+        document.querySelectorAll('input[type="radio"]').forEach(r => r.checked = false);
+        document.querySelectorAll('.indicator-item').forEach(item => item.classList.remove('is-buy', 'is-sell'));
+        setMacro(document.getElementById('m-neutral'));
+    }
+
+    render();
+</script>
+</body>
+</html>
