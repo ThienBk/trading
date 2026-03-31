@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trading Speed Dashboard v4</title>
+    <title>Trading Dashboard - Clear Separation</title>
     <style>
         :root {
             --bg-color: #020617;
@@ -22,114 +22,119 @@
             background-color: var(--bg-color); color: var(--text-color);
         }
 
-        .dashboard { display: flex; flex-direction: column; height: 100vh; padding: 0.5rem; gap: 0.5rem; }
+        .dashboard { display: flex; flex-direction: column; height: 100vh; padding: 10px; gap: 10px; }
 
-        /* Header & Confidence Bar */
+        /* Header Bar */
         .status-header {
-            display: flex; flex-wrap: wrap; gap: 1rem;
-            background: var(--card-bg); padding: 0.8rem; border-radius: 12px; border: 1px solid #334155;
+            display: grid; grid-template-columns: 1fr 400px; gap: 15px;
+            background: var(--card-bg); padding: 12px; border-radius: 12px; border: 1px solid #334155;
             flex-shrink: 0;
         }
 
         .buy-zone {
-            flex: 1; min-width: 300px;
-            background: #000; height: 60px; border-radius: 10px;
+            background: #000; height: 55px; border-radius: 8px;
             position: relative; border: 2px solid #334155; overflow: hidden;
         }
 
         #progress-bar {
-            height: 100%; width: 0%; 
-            transition: all 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+            height: 100%; width: 0%; transition: all 0.4s ease-out;
             position: absolute; left: 50%; z-index: 1;
         }
-        #progress-bar.positive { background: var(--primary-green); box-shadow: 0 0 20px rgba(34, 197, 94, 0.4); }
-        #progress-bar.negative { background: var(--danger-red); left: auto; right: 50%; box-shadow: 0 0 20px rgba(239, 68, 68, 0.4); }
+        #progress-bar.positive { background: var(--primary-green); }
+        #progress-bar.negative { background: var(--danger-red); left: auto; right: 50%; }
 
         .buy-label {
             position: absolute; width: 100%; text-align: center; top: 50%; transform: translateY(-50%);
-            font-size: clamp(1.2rem, 4vw, 2rem); font-weight: 900; color: #fff; z-index: 5;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.9), -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+            font-size: 1.8rem; font-weight: 900; color: #fff; z-index: 5;
+            text-shadow: 2px 2px 4px #000;
         }
 
-        /* Timeframe Grid */
-        .timeframe-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; flex-grow: 1; overflow: hidden; }
+        /* Lưới 2x2 */
+        .timeframe-grid { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            grid-template-rows: 1fr 1fr;    
+            gap: 15px; flex-grow: 1; overflow: hidden; 
+        }
 
         .tf-column {
-            background: var(--card-bg); border-radius: 10px; border: 1px solid #334155;
-            display: flex; flex-direction: column; padding: 8px; overflow: hidden;
-            position: relative;
+            background: var(--card-bg); border-radius: 12px; border: 1px solid #475569;
+            display: flex; flex-direction: column; padding: 12px; overflow: hidden;
         }
 
         .tf-header-box {
-            display: flex; justify-content: center; align-items: center; position: relative; margin-bottom: 5px;
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;
         }
 
-        .tf-header { color: var(--accent-blue); font-weight: 800; font-size: 0.85rem; }
+        .tf-header { color: var(--accent-blue); font-weight: 900; font-size: 1rem; text-transform: uppercase; }
 
-        /* Nút Reset riêng cho khung */
         .tf-reset-btn {
-            position: absolute; right: 0; background: #334155; border: 1px solid #475569;
-            color: #94a3b8; font-size: 0.6rem; padding: 2px 5px; border-radius: 3px;
-            cursor: pointer; transition: 0.2s; font-weight: bold;
+            background: #334155; border: 1px solid #475569; color: #fff;
+            font-size: 0.65rem; padding: 3px 8px; border-radius: 4px; cursor: pointer;
         }
-        .tf-reset-btn:hover { background: var(--danger-red); color: white; border-color: white; }
 
-        .quick-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 8px; }
+        /* KHU VỰC ĐIỀU KHIỂN (ALL BUY/SELL) - Làm cho khác biệt hẳn */
+        .quick-actions { 
+            display: grid; grid-template-columns: 1fr 1fr; gap: 10px; 
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 2px dashed #334155; /* GẠCH NGANG PHÂN CÁCH ĐÂY BRO */
+        }
         .qa-btn {
-            padding: 6px 2px; border: none; border-radius: 4px; font-size: 0.65rem; font-weight: 800;
-            cursor: pointer; color: #fff; transition: 0.2s;
+            padding: 12px; border: none; border-radius: 8px; font-size: 0.85rem; font-weight: 800;
+            cursor: pointer; color: #fff; text-transform: uppercase;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.3); /* Tạo độ nổi cho nút */
+            transition: transform 0.1s;
         }
-        .qa-buy { background: #14532d; border: 1px solid var(--primary-green); }
-        .qa-sell { background: #7f1d1d; border: 1px solid var(--danger-red); }
+        .qa-btn:active { transform: translateY(3px); box-shadow: none; }
+        .qa-buy { background: #15803d; border: 1px solid #22c55e; }
+        .qa-sell { background: #b91c1c; border: 1px solid #ef4444; }
 
-        /* Indicators */
-        .indicator-list { overflow-y: auto; flex-grow: 1; scrollbar-width: thin; }
+        /* Indicators List - Làm mỏng và thoáng hơn */
+        .indicator-list { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 8px; overflow-y: auto; 
+        }
+        
         .indicator-item {
-            background: var(--item-bg); margin-bottom: 4px; border-radius: 5px;
-            overflow: hidden; border: 1px solid #334155; position: relative;
+            background: var(--item-bg); border-radius: 4px;
+            overflow: hidden; border: 1px solid #1e293b; position: relative;
+            height: 38px; /* Giảm nhẹ chiều cao để tạo khoảng trống */
         }
 
         .ind-title {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            font-size: 0.65rem; font-weight: 700; pointer-events: none; z-index: 3;
-            width: 85%; text-align: center; color: #fff; line-height: 1.1;
+            font-size: 0.7rem; font-weight: 600; pointer-events: none; z-index: 3;
+            width: 80%; text-align: center; color: #94a3b8; /* Chữ mặc định mờ hơn nút All */
         }
 
         .side-label {
             position: absolute; font-size: 0.5rem; font-weight: 900;
-            top: 2px; opacity: 0.2; transition: 0.3s; z-index: 4;
+            top: 2px; opacity: 0.2; z-index: 4;
         }
-        .label-buy { left: 4px; color: var(--primary-green); }
-        .label-sell { right: 4px; color: var(--danger-red); }
+        .label-buy { left: 5px; color: var(--primary-green); }
+        .label-sell { right: 5px; color: var(--danger-red); }
 
-        .indicator-item.is-buy { background: #14532d !important; border-color: var(--primary-green); }
-        .indicator-item.is-buy .label-buy { opacity: 1; }
+        /* Highlight khi chọn - Làm rực lên để nhận diện */
+        .indicator-item.is-buy { background: #064e3b !important; border-color: var(--primary-green); }
+        .indicator-item.is-buy .ind-title { color: #fff; }
         .indicator-item.is-sell { background: #7f1d1d !important; border-color: var(--danger-red); }
-        .indicator-item.is-sell .label-sell { opacity: 1; }
+        .indicator-item.is-sell .ind-title { color: #fff; }
 
-        .split-container { display: flex; height: 36px; }
-        .split-half { flex: 1; cursor: pointer; position: relative; z-index: 2; }
+        .split-container { display: flex; height: 100%; }
+        .split-half { flex: 1; cursor: pointer; z-index: 2; }
         .split-half input { display: none; }
+        
+        .half-buy { border-right: 1px solid rgba(255,255,255,0.05); }
 
-        .half-buy:hover { background: rgba(34, 197, 94, 0.15); }
-        .half-sell:hover { background: rgba(239, 68, 68, 0.15); }
+        /* Control Panel */
+        .side-panel { display: flex; align-items: center; gap: 10px; }
+        .m-group { display: flex; gap: 5px; flex: 1; }
+        .m-btn { flex: 1; padding: 12px; border-radius: 8px; border: 1px solid #475569; background: #0f172a; cursor: pointer; font-size: 0.8rem; font-weight: bold; color: #fff; }
+        .m-btn.active { background: var(--accent-blue); }
+        .clear-btn { padding: 12px 20px; background: var(--danger-red); border: none; border-radius: 8px; color: white; font-weight: 800; cursor: pointer; }
 
-        /* Macro & Control */
-        .side-panel { display: flex; align-items: center; gap: 8px; min-width: 300px; flex: 0.5; }
-        .m-group { display: flex; gap: 4px; flex: 1; }
-        .m-btn { flex: 1; padding: 10px 4px; border-radius: 6px; border: 1px solid #475569; background: #0f172a; cursor: pointer; font-size: 0.65rem; font-weight: bold; color: #fff; }
-        .m-btn.active { background: var(--accent-blue); border-color: #fff; }
-        .clear-btn { padding: 10px; background: var(--danger-red); border: none; border-radius: 6px; color: white; font-weight: 800; cursor: pointer; font-size: 0.65rem; }
-
-        /* Responsive */
-        @media (max-width: 1024px) {
-            .timeframe-grid { grid-template-columns: repeat(2, 1fr); overflow-y: auto; }
-            body, html { overflow: auto; }
-        }
-        @media (max-width: 600px) {
-            .timeframe-grid { grid-template-columns: 1fr; }
-            .status-header { flex-direction: column; }
-        }
     </style>
 </head>
 <body>
@@ -161,7 +166,7 @@
         { name: "KHUNG 1W (3%)", weight: 3.0, id: "1w" }
     ];
 
-    const indicators = ["Cấu trúc xu hướng", "RSI (Quá mua/bán)", "MACD Histogram", "Giá vs MA20/50", "Nến đảo chiều", "Volume Confirm", "Hỗ trợ/Kháng cự", "Bollinger Band", "Fibonacci Level", "Stochastic"];
+    const indicators = ["Xu hướng", "RSI", "MACD", "MA20/50", "Nến đảo chiều", "Volume", "Hỗ trợ/KC", "Bollinger", "Fibo", "Stoch"];
 
     function render() {
         const grid = document.getElementById('main-grid');
@@ -170,7 +175,7 @@
                 <div class="tf-column" id="col-${tf.id}">
                     <div class="tf-header-box">
                         <div class="tf-header">${tf.name}</div>
-                        <button class="tf-reset-btn" onclick="resetTimeframe('${tf.id}')" title="Reset khung này">R</button>
+                        <button class="tf-reset-btn" onclick="resetTimeframe('${tf.id}')">Reset ${tf.id.toUpperCase()}</button>
                     </div>
                     <div class="quick-actions">
                         <button class="qa-btn qa-buy" onclick="bulkCheck('${tf.id}', 'buy')">ALL BUY</button>
@@ -225,11 +230,8 @@
         calc();
     }
 
-    // HÀM RESET RIÊNG CHO MỖI KHUNG
     function resetTimeframe(tfId) {
-        // Bỏ chọn tất cả radio trong khung đó
         document.querySelectorAll(`input[name^="group_${tfId}_"]`).forEach(r => r.checked = false);
-        // Xóa highlight màu xanh/đỏ của các dòng trong khung đó
         document.querySelectorAll(`#col-${tfId} .indicator-item`).forEach(item => {
             item.classList.remove('is-buy', 'is-sell');
         });
@@ -250,12 +252,10 @@
                 total += (r.value === 'buy' ? tf.weight : -tf.weight);
             });
         });
-
         total += macroBonus;
         const bar = document.getElementById('progress-bar');
         const text = document.getElementById('percent-text');
         text.innerText = total.toFixed(0);
-
         if (total >= 0) {
             bar.className = 'positive';
             bar.style.left = "50%"; bar.style.right = "auto";
